@@ -81,6 +81,102 @@
 
 //Production ready code
 
+// const express = require("express");
+// const mongoose = require("mongoose");
+// const cors = require("cors");
+// const multer = require("multer");
+// const fs = require("fs");
+// const path = require("path");
+// require("dotenv").config();
+
+// const Invoice = require("./models/Invoice");
+
+// const app = express();
+
+// // ================= MIDDLEWARE =================
+// app.use(cors());
+// app.use(express.json());
+
+// // ================= DB CONNECTION =================
+// mongoose.connect(process.env.MONGO_URI)
+//   .then(() => console.log("MongoDB Connected ✅"))
+//   .catch(err => console.log(err));
+
+// // ================= ROOT ROUTE =================
+// app.get("/", (req, res) => {
+//   res.send("API is running 🚀");
+// });
+
+// // ================= MULTER =================
+// const storage = multer.memoryStorage();
+// const upload = multer({ storage });
+
+// // ================= FILE STORAGE (SERVER FOLDER) =================
+// const uploadDir = path.join(__dirname, "uploads");
+
+// if (!fs.existsSync(uploadDir)) {
+//   fs.mkdirSync(uploadDir);
+// }
+
+// // ================= NEXT INVOICE =================
+// app.get("/next-invoice", async (req, res) => {
+//   try {
+//     const last = await Invoice.findOne().sort({ invoiceNo: -1 });
+//     const nextNo = last ? last.invoiceNo + 1 : 1001;
+//     res.json({ nextNo });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// // ================= GET INVOICE =================
+// app.get("/invoice/:no", async (req, res) => {
+//   try {
+//     const data = await Invoice.findOne({ invoiceNo: req.params.no });
+//     res.json(data);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// // ================= SAVE + PDF =================
+// app.post("/save-invoice", upload.single("file"), async (req, res) => {
+//   try {
+//     const data = JSON.parse(req.body.data);
+
+//     const filePath = path.join(
+//       uploadDir,
+//       `Invoice_${data.invoiceNo}.pdf`
+//     );
+
+//     // Save PDF file
+//     fs.writeFileSync(filePath, req.file.buffer);
+
+//     // Save to DB
+//     await Invoice.findOneAndUpdate(
+//       { invoiceNo: data.invoiceNo },
+//       { ...data, pdfPath: filePath },
+//       { upsert: true, new: true }
+//     );
+
+//     res.json({ success: true });
+
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// // ================= SERVER =================
+// const PORT = process.env.PORT || 5000;
+
+// app.listen(PORT, () => {
+//   console.log(`Server running on port ${PORT}`);
+// });
+
+
+
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -94,7 +190,10 @@ const Invoice = require("./models/Invoice");
 const app = express();
 
 // ================= MIDDLEWARE =================
-app.use(cors());
+app.use(cors({
+  origin: "*"
+}));
+
 app.use(express.json());
 
 // ================= DB CONNECTION =================
@@ -111,7 +210,7 @@ app.get("/", (req, res) => {
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// ================= FILE STORAGE (SERVER FOLDER) =================
+// ================= FILE STORAGE =================
 const uploadDir = path.join(__dirname, "uploads");
 
 if (!fs.existsSync(uploadDir)) {
@@ -139,7 +238,7 @@ app.get("/invoice/:no", async (req, res) => {
   }
 });
 
-// ================= SAVE + PDF =================
+// ================= SAVE INVOICE =================
 app.post("/save-invoice", upload.single("file"), async (req, res) => {
   try {
     const data = JSON.parse(req.body.data);
@@ -149,10 +248,8 @@ app.post("/save-invoice", upload.single("file"), async (req, res) => {
       `Invoice_${data.invoiceNo}.pdf`
     );
 
-    // Save PDF file
     fs.writeFileSync(filePath, req.file.buffer);
 
-    // Save to DB
     await Invoice.findOneAndUpdate(
       { invoiceNo: data.invoiceNo },
       { ...data, pdfPath: filePath },
