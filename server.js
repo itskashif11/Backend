@@ -267,30 +267,25 @@ app.get("/invoice/:no", async (req, res) => {
 
 app.post("/save-invoice", async (req, res) => {
   try {
-    const { invoiceNo, date, seller, buyer, rows, pdf } = req.body;
+    const { invoiceNo, date, seller, buyer, rows } = req.body;
 
     if (!invoiceNo) {
       return res.status(400).json({ error: "Invoice number required" });
     }
 
-    const savedInvoice = await Invoice.findOneAndUpdate(
+    const invoice = await Invoice.findOneAndUpdate(
       { invoiceNo },
       {
         invoiceNo,
         date,
         seller,
         buyer,
-        rows,
-        pdfPath: pdf // store base64 (or ignore later if not needed)
+        rows
       },
       { upsert: true, new: true }
     );
 
-    res.json({
-      success: true,
-      message: "Invoice saved",
-      data: savedInvoice
-    });
+    res.json({ success: true, data: invoice });
 
   } catch (err) {
     console.log("Save Error:", err);
