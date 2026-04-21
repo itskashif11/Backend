@@ -175,14 +175,138 @@
 // });
 
 
+//just now
+
+// const express = require("express");
+// const mongoose = require("mongoose");
+// const cors = require("cors");
+// const multer = require("multer");
+// const fs = require("fs");
+// const path = require("path");
+// require("dotenv").config();
+
+// const Invoice = require("./models/Invoice");
+
+// const app = express();
+
+// // ================= MIDDLEWARE =================
+// app.use(cors({
+//   origin: "*"
+// }));
+
+// app.use(express.json());
+
+// // ================= DB CONNECTION =================
+// mongoose.connect(process.env.MONGO_URI)
+//   .then(() => console.log("MongoDB Connected ✅"))
+//   .catch(err => console.log(err));
+
+// // ================= ROOT ROUTE =================
+// app.get("/", (req, res) => {
+//   res.send("API is running 🚀");
+// });
+
+// // ================= MULTER =================
+// const storage = multer.memoryStorage();
+// const upload = multer({ storage });
+
+// // ================= FILE STORAGE =================
+// const uploadDir = path.join(__dirname, "uploads");
+
+// if (!fs.existsSync(uploadDir)) {
+//   fs.mkdirSync(uploadDir);
+// }
+
+// // ================= NEXT INVOICE =================
+// app.get("/next-invoice", async (req, res) => {
+//   try {
+//     const last = await Invoice.findOne().sort({ invoiceNo: -1 });
+//     const nextNo = last ? last.invoiceNo + 1 : 1001;
+//     res.json({ nextNo });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// // ================= GET INVOICE =================
+// app.get("/invoice/:no", async (req, res) => {
+//   try {
+//     const data = await Invoice.findOne({ invoiceNo: req.params.no });
+//     res.json(data);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+// // ================= SAVE INVOICE =================
+// // app.post("/save-invoice", upload.single("file"), async (req, res) => {
+// //   try {
+// //     const data = JSON.parse(req.body.data);
+
+// //     const filePath = path.join(
+// //       uploadDir,
+// //       `Invoice_${data.invoiceNo}.pdf`
+// //     );
+
+// //     fs.writeFileSync(filePath, req.file.buffer);
+
+// //     await Invoice.findOneAndUpdate(
+// //       { invoiceNo: data.invoiceNo },
+// //       { ...data, pdfPath: filePath },
+// //       { upsert: true, new: true }
+// //     );
+
+// //     res.json({ success: true });
+
+// //   } catch (err) {
+// //     console.log(err);
+// //     res.status(500).json({ error: err.message });
+// //   }
+// // });
+
+
+// app.post("/save-invoice", async (req, res) => {
+//   try {
+//     const { invoiceNo, date, seller, buyer, rows } = req.body;
+
+//     if (!invoiceNo) {
+//       return res.status(400).json({ error: "Invoice number required" });
+//     }
+
+//     const invoice = await Invoice.findOneAndUpdate(
+//       { invoiceNo },
+//       {
+//         invoiceNo,
+//         date,
+//         seller,
+//         buyer,
+//         rows
+//       },
+//       { upsert: true, new: true }
+//     );
+
+//     res.json({ success: true, data: invoice });
+
+//   } catch (err) {
+//     console.log("Save Error:", err);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+
+
+// // ================= SERVER =================
+// const PORT = process.env.PORT || 5000;
+
+// app.listen(PORT, () => {
+//   console.log(`Server running on port ${PORT}`);
+// });
+
 
 
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const multer = require("multer");
-const fs = require("fs");
-const path = require("path");
 require("dotenv").config();
 
 const Invoice = require("./models/Invoice");
@@ -190,38 +314,25 @@ const Invoice = require("./models/Invoice");
 const app = express();
 
 // ================= MIDDLEWARE =================
-app.use(cors({
-  origin: "*"
-}));
-
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 // ================= DB CONNECTION =================
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected ✅"))
-  .catch(err => console.log(err));
+  .catch(err => console.log("DB Error ❌", err));
 
-// ================= ROOT ROUTE =================
+// ================= ROOT =================
 app.get("/", (req, res) => {
-  res.send("API is running 🚀");
+  res.send("API Running 🚀");
 });
-
-// ================= MULTER =================
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-
-// ================= FILE STORAGE =================
-const uploadDir = path.join(__dirname, "uploads");
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
 
 // ================= NEXT INVOICE =================
 app.get("/next-invoice", async (req, res) => {
   try {
     const last = await Invoice.findOne().sort({ invoiceNo: -1 });
     const nextNo = last ? last.invoiceNo + 1 : 1001;
+
     res.json({ nextNo });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -232,6 +343,7 @@ app.get("/next-invoice", async (req, res) => {
 app.get("/invoice/:no", async (req, res) => {
   try {
     const data = await Invoice.findOne({ invoiceNo: req.params.no });
+
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -239,32 +351,6 @@ app.get("/invoice/:no", async (req, res) => {
 });
 
 // ================= SAVE INVOICE =================
-// app.post("/save-invoice", upload.single("file"), async (req, res) => {
-//   try {
-//     const data = JSON.parse(req.body.data);
-
-//     const filePath = path.join(
-//       uploadDir,
-//       `Invoice_${data.invoiceNo}.pdf`
-//     );
-
-//     fs.writeFileSync(filePath, req.file.buffer);
-
-//     await Invoice.findOneAndUpdate(
-//       { invoiceNo: data.invoiceNo },
-//       { ...data, pdfPath: filePath },
-//       { upsert: true, new: true }
-//     );
-
-//     res.json({ success: true });
-
-//   } catch (err) {
-//     console.log(err);
-//     res.status(500).json({ error: err.message });
-//   }
-// });
-
-
 app.post("/save-invoice", async (req, res) => {
   try {
     const { invoiceNo, date, seller, buyer, rows } = req.body;
@@ -280,7 +366,7 @@ app.post("/save-invoice", async (req, res) => {
         date,
         seller,
         buyer,
-        rows
+        rows // ✅ IMPORTANT FIX
       },
       { upsert: true, new: true }
     );
@@ -292,8 +378,6 @@ app.post("/save-invoice", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
 
 // ================= SERVER =================
 const PORT = process.env.PORT || 5000;
