@@ -239,30 +239,66 @@ app.get("/invoice/:no", async (req, res) => {
 });
 
 // ================= SAVE INVOICE =================
-app.post("/save-invoice", upload.single("file"), async (req, res) => {
+// app.post("/save-invoice", upload.single("file"), async (req, res) => {
+//   try {
+//     const data = JSON.parse(req.body.data);
+
+//     const filePath = path.join(
+//       uploadDir,
+//       `Invoice_${data.invoiceNo}.pdf`
+//     );
+
+//     fs.writeFileSync(filePath, req.file.buffer);
+
+//     await Invoice.findOneAndUpdate(
+//       { invoiceNo: data.invoiceNo },
+//       { ...data, pdfPath: filePath },
+//       { upsert: true, new: true }
+//     );
+
+//     res.json({ success: true });
+
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+
+
+app.post("/save-invoice", async (req, res) => {
   try {
-    const data = JSON.parse(req.body.data);
+    const { invoiceNo, date, seller, buyer, rows, pdf } = req.body;
 
-    const filePath = path.join(
-      uploadDir,
-      `Invoice_${data.invoiceNo}.pdf`
-    );
+    if (!invoiceNo) {
+      return res.status(400).json({ error: "Invoice number required" });
+    }
 
-    fs.writeFileSync(filePath, req.file.buffer);
-
-    await Invoice.findOneAndUpdate(
-      { invoiceNo: data.invoiceNo },
-      { ...data, pdfPath: filePath },
+    const savedInvoice = await Invoice.findOneAndUpdate(
+      { invoiceNo },
+      {
+        invoiceNo,
+        date,
+        seller,
+        buyer,
+        rows,
+        pdfPath: pdf // store base64 (or ignore later if not needed)
+      },
       { upsert: true, new: true }
     );
 
-    res.json({ success: true });
+    res.json({
+      success: true,
+      message: "Invoice saved",
+      data: savedInvoice
+    });
 
   } catch (err) {
-    console.log(err);
+    console.log("Save Error:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
+
 
 // ================= SERVER =================
 const PORT = process.env.PORT || 5000;
