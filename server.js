@@ -308,8 +308,10 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
 const User = require("./models/User");
 const Invoice = require("./models/Invoice");
 
@@ -320,9 +322,18 @@ app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 // ================= DB CONNECTION =================
-mongoose.connect(process.env.MONGO_URI)
+const mongoURI = process.env.MONGO_URI;
+
+if (!mongoURI) {
+  console.log("❌ ERROR: MONGO_URI is not defined in environment variables");
+}
+
+mongoose.connect(mongoURI)
   .then(() => console.log("MongoDB Connected ✅"))
-  .catch(err => console.log("DB Error ❌", err));
+  .catch((err) => {
+    console.log("❌ DB CONNECTION FAILED");
+    console.log(err.message);
+  });
 
 // ================= ROOT =================
 app.get("/", (req, res) => {
@@ -345,7 +356,6 @@ app.get("/next-invoice", async (req, res) => {
 app.get("/invoice/:no", async (req, res) => {
   try {
     const data = await Invoice.findOne({ invoiceNo: req.params.no });
-
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -363,13 +373,7 @@ app.post("/save-invoice", async (req, res) => {
 
     const invoice = await Invoice.findOneAndUpdate(
       { invoiceNo },
-      {
-        invoiceNo,
-        date,
-        seller,
-        buyer,
-        rows // ✅ IMPORTANT FIX
-      },
+      { invoiceNo, date, seller, buyer, rows },
       { upsert: true, new: true }
     );
 
@@ -381,20 +385,22 @@ app.post("/save-invoice", async (req, res) => {
   }
 });
 
-//register
 
 // ================= REGISTER =================
 app.post("/register", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // check existing user
+    if (!username || !password) {
+      return res.status(400).json({ message: "Username & password required" });
+    }
+
     const existing = await User.findOne({ username });
+
     if (existing) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // 🔐 hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
@@ -407,11 +413,11 @@ app.post("/register", async (req, res) => {
     res.json({ message: "User registered successfully ✅" });
 
   } catch (err) {
+    console.log("REGISTER ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-//Login
 
 // ================= LOGIN =================
 app.post("/login", async (req, res) => {
@@ -424,7 +430,6 @@ app.post("/login", async (req, res) => {
       return res.status(400).json({ message: "User not found" });
     }
 
-    // 🔐 compare hashed password
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
@@ -444,9 +449,11 @@ app.post("/login", async (req, res) => {
     });
 
   } catch (err) {
+    console.log("LOGIN ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // ================= SERVER =================
 const PORT = process.env.PORT || 5000;
@@ -454,3 +461,8 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+
+
+
+
